@@ -36,24 +36,21 @@ app.get('/menu', (req, res) => {
   res.json(menu);
 });
 
-// POST /menu - Add new item
-app.post('/menu', (req, res) => {
-  const { name, price, category } = req.body;
-  
-  if (!name || !price) {
-    return res.status(400).json({ error: "Name and price are required" });
-  }
-
+app.post("/menu", (req, res) => {
   const newItem = {
-    id: menu.length > 0 ? Math.max(...menu.map(m => m.id)) + 1 : 1,
-    name,
-    price,
-    category: category || "General"
+    id: Date.now(),
+    name: req.body.name,
+    price: req.body.price
   };
 
   menu.push(newItem);
-  io.emit("menu_updated", menu);
-  res.status(201).json(newItem);
+
+  console.log("Menu added:", newItem);
+
+  res.json({
+    success: true,
+    item: newItem
+  });
 });
 
 // PUT /menu/:id - Update item

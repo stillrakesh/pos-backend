@@ -15,8 +15,8 @@ const io = new Server(httpServer, {
 });
 
 // Middleware
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
 // 1. In-memory data
 let orders = [];

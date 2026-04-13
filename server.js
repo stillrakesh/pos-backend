@@ -27,10 +27,8 @@ let tables = [
 ];
 
 let menu = [
-  { id: 1, name: 'Hot Coffee', price: 60, cat: 'Beverages', type: 'Veg' },
-  { id: 2, name: 'Cold Coffee', price: 80, cat: 'Beverages', type: 'Veg' },
-  { id: 3, name: 'Club Sandwich', price: 120, cat: 'Snacks', type: 'Veg' },
-  { id: 4, name: 'Chicken Pizza', price: 250, cat: 'Main Course', type: 'Non-Veg' }
+  { id: 1, name: "Pizza", price: 250 },
+  { id: 2, name: "Burger", price: 150 }
 ];
 
 // REST API Endpoints

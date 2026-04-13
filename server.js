@@ -148,12 +148,24 @@ app.get("/test-add-menu", (req, res) => {
   });
 });
 
-// GET /table/:id - Return a single table
+// GET /tables - Return all tables
+app.get('/tables', (req, res) => {
+  res.json(tables);
+});
+
+// GET /table/:id - Return a single table with its orders
 app.get('/table/:id', (req, res) => {
-  const { id } = req.params;
-  const table = tables.find(t => String(t.id) === String(id));
+  const tableId = parseInt(req.params.id);
+  const table = tables.find(t => t.id === tableId);
+  
   if (!table) return res.status(404).json({ error: "Table not found" });
-  res.json(table);
+
+  const tableOrders = orders.filter(o => o.tableId === tableId);
+
+  res.json({
+    table,
+    orders: tableOrders
+  });
 });
 
 app.post("/tables", (req, res) => {
@@ -238,18 +250,7 @@ app.post("/table/:id/clear", (req, res) => {
   res.json({ success: true, table });
 });
 
-// GET /table/:id - Return table info and its orders
-app.get("/table/:id", (req, res) => {
-  const tableId = parseInt(req.params.id);
 
-  const table = tables.find(t => t.id === tableId);
-  const tableOrders = orders.filter(o => o.tableId === tableId);
-
-  res.json({
-    table,
-    orders: tableOrders
-  });
-});
 
 // POST /orders - Create new order
 app.post("/orders", (req, res) => {

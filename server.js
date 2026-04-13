@@ -18,66 +18,69 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 
-// In-memory storage
+// 1. In-memory data
 let orders = [];
-let tables = [
-  { id: 1, status: "VACANT", orders: [] },
-  { id: 2, status: "VACANT", orders: [] },
-  { id: 3, status: "VACANT", orders: [] }
-];
 
 let menu = [
   { id: 1, name: "Pizza", price: 250 },
   { id: 2, name: "Burger", price: 150 }
 ];
 
-// REST API Endpoints
+let tables = [
+  { id: 1, status: "VACANT", orders: [] },
+  { id: 2, status: "VACANT", orders: [] },
+  { id: 3, status: "VACANT", orders: [] }
+];
 
-// GET /tables - Return all tables
-app.get('/tables', (req, res) => {
-  res.json(tables);
-});
+// 2. APIs
 
 // GET /menu - Return all menu items
 app.get('/menu', (req, res) => {
   res.json(menu);
 });
 
+// GET /tables - Return all tables
+app.get('/tables', (req, res) => {
+  res.json(tables);
+});
+
 // GET /orders - Return all orders
 app.get('/orders', (req, res) => {
-  res.json({ orders });
+  res.json(orders);
 });
 
 // POST /orders - Create new order
 app.post('/orders', (req, res) => {
-  const { table_number, items } = req.body;
+  const { table, items } = req.body;
 
-  if (!table_number || !items) {
-    return res.status(400).json({ error: "Table number and items are required" });
+  if (!table || !items) {
+    return res.status(400).json({ error: "Table ID and items are required" });
   }
 
-  const savedOrder = {
+  const newOrder = {
     id: uuidv4(),
-    table_number,
+    table: parseInt(table),
     items,
     status: 'NEW',
     timestamp: new Date().toISOString()
   };
 
-  orders.push(savedOrder);
+  orders.push(newOrder);
 
-  // Update table status
-  const table = tables.find(t => t.id === parseInt(req.body.table));
-  if (table) {
-    table.status = "OCCUPIED";
-    table.orders.push(savedOrder);
-    io.emit("table_updated", table);
+  // Assign to table and change status
+  const targetTable = tables.find(t => t.id === parseInt(table));
+  if (targetTable) {
+    targetTable.status = "OCCUPIED";
+    targetTable.orders.push(newOrder);
+    
+    // Emit real-time table update
+    io.emit("table_updated", targetTable);
   }
 
-  // Emit real-time event for order
-  io.emit('order_created', savedOrder);
+  // Emit real-time order creation
+  io.emit('order_created', newOrder);
 
-  res.status(201).json(savedOrder);
+  res.status(201).json(newOrder);
 });
 
 // PATCH /orders/:id - Update order status
@@ -98,22 +101,32 @@ app.patch('/orders/:id', (req, res) => {
   orders[orderIndex].status = status;
   const updatedOrder = orders[orderIndex];
 
-  // Emit real-time event
+  // Also update the order status within the tables array
+  tables.forEach(t => {
+    const tableOrderIndex = t.orders.findIndex(o => o.id === id);
+    if (tableOrderIndex !== -1) {
+      t.orders[tableOrderIndex].status = status;
+      // Emit table_updated whenever an internal order changes status
+      io.emit("table_updated", t);
+    }
+  });
+
+  // Emit real-time order update
   io.emit('order_updated', updatedOrder);
 
   res.json(updatedOrder);
 });
 
-// Socket.IO connection handling
+// 3. Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`\x1b[36mConnected: ${socket.id}\x1b[0m`);
+  console.log(`\x1b[36mℹ Client Connected: ${socket.id}\x1b[0m`);
   
   socket.on('disconnect', () => {
-    console.log(`\x1b[33mDisconnected: ${socket.id}\x1b[0m`);
+    console.log(`\x1b[33mℹ Client Disconnected: ${socket.id}\x1b[0m`);
   });
 });
 
-// Server setup
+// 4. Server setup
 const PORT = 3000;
 
 httpServer.listen(PORT, '0.0.0.0', () => {
@@ -130,9 +143,9 @@ httpServer.listen(PORT, '0.0.0.0', () => {
     }
   }
 
-  console.log(`\n\x1b[32m🚀 Restaurant POS Backend Server Running\x1b[0m`);
+  console.log(`\n\x1b[32m🚀 Restaurant POS Backend Standardized & Running\x1b[0m`);
   console.log(`\x1b[35mLocal:   http://localhost:${PORT}\x1b[0m`);
   console.log(`\x1b[35mNetwork: http://${localIP}:${PORT}\x1b[0m`);
-  console.log(`\n\x1b[33mUse the Network URL to connect from your Captain App!\x1b[0m\n`);
+  console.log(`\n\x1b[33mUse the Network URL to connect your Captain App and Table devices!\x1b[0m\n`);
   console.log(`Press Ctrl+C to stop\n`);
 });

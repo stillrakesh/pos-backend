@@ -21,10 +21,7 @@ app.use(express.json());
 // 1. In-memory data
 let orders = [];
 
-let menu = [
-  { id: 1, name: "Pizza", price: 250, category: "Main Course" },
-  { id: 2, name: "Burger", price: 150, category: "Snacks" }
-];
+let menu = [];
 
 let tables = [
   { id: 1, status: "VACANT", orders: [] },

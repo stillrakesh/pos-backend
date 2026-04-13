@@ -71,6 +71,7 @@ app.post("/categories", (req, res) => {
 
   if (!categories.includes(name)) {
     categories.push(name);
+    io.emit("categories_updated", categories);
   }
 
   res.json({ success: true, categories });
@@ -97,6 +98,7 @@ app.post("/menu", (req, res) => {
 
   menu.push(newItem);
   saveMenu();
+  io.emit("menu_updated", menu);
 
   console.log("✅ Menu item saved:", newItem);
 
@@ -187,6 +189,7 @@ app.post("/tables", (req, res) => {
 
   tables.push(newTable);
   saveTables();
+  io.emit("table_updated", newTable);
 
   console.log("TABLE ADDED:", newTable);
 

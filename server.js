@@ -36,6 +36,13 @@ const saveMenu = () => {
 
 let tables = [];
 
+if (tables.length === 0) {
+  tables = [
+    { id: 1, name: "Table 1", status: "free", orders: [] },
+    { id: 2, name: "Table 2", status: "free", orders: [] }
+  ];
+}
+
 // 2. APIs
 
 // GET /menu - Return all menu items

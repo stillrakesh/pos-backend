@@ -22,8 +22,8 @@ app.use(express.json());
 let orders = [];
 
 let menu = [
-  { id: 1, name: "Pizza", price: 250 },
-  { id: 2, name: "Burger", price: 150 }
+  { id: 1, name: "Pizza", price: 250, category: "Main Course" },
+  { id: 2, name: "Burger", price: 150, category: "Snacks" }
 ];
 
 let tables = [
@@ -37,6 +37,62 @@ let tables = [
 // GET /menu - Return all menu items
 app.get('/menu', (req, res) => {
   res.json(menu);
+});
+
+// POST /menu - Add new item
+app.post('/menu', (req, res) => {
+  const { name, price, category } = req.body;
+  
+  if (!name || !price) {
+    return res.status(400).json({ error: "Name and price are required" });
+  }
+
+  const newItem = {
+    id: menu.length > 0 ? Math.max(...menu.map(m => m.id)) + 1 : 1,
+    name,
+    price,
+    category: category || "General"
+  };
+
+  menu.push(newItem);
+  io.emit("menu_updated", menu);
+  res.status(201).json(newItem);
+});
+
+// PUT /menu/:id - Update item
+app.put('/menu/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, price, category } = req.body;
+
+  const itemIndex = menu.findIndex(m => m.id === parseInt(id));
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+
+  menu[itemIndex] = {
+    ...menu[itemIndex],
+    name: name || menu[itemIndex].name,
+    price: price || menu[itemIndex].price,
+    category: category || menu[itemIndex].category
+  };
+
+  io.emit("menu_updated", menu);
+  res.json(menu[itemIndex]);
+});
+
+// DELETE /menu/:id - Remove item
+app.delete('/menu/:id', (req, res) => {
+  const { id } = req.params;
+  const initialLength = menu.length;
+  
+  menu = menu.filter(m => m.id !== parseInt(id));
+
+  if (menu.length === initialLength) {
+    return res.status(404).json({ error: "Item not found" });
+  }
+
+  io.emit("menu_updated", menu);
+  res.status(204).send();
 });
 
 // GET /tables - Return all tables

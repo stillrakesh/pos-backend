@@ -146,23 +146,22 @@ app.get('/tables', (req, res) => {
   res.json(tables);
 });
 
-// POST /tables - Add new table
-app.post('/tables', (req, res) => {
-  const { id } = req.body;
-  
+app.post("/tables", (req, res) => {
   const newTable = {
-    id: id || (tables.length > 0 ? Math.max(...tables.map(t => t.id)) + 1 : 1),
-    status: "VACANT",
+    id: Date.now(),
+    name: req.body.name,
+    status: req.body.status || "free",
     orders: []
   };
 
-  if (tables.find(t => t.id === newTable.id)) {
-    return res.status(400).json({ error: "Table ID already exists" });
-  }
-
   tables.push(newTable);
-  io.emit("table_updated", newTable);
-  res.status(201).json(newTable);
+
+  console.log("TABLE ADDED:", newTable);
+
+  res.json({
+    success: true,
+    item: newTable
+  });
 });
 
 // PATCH /tables/:id - Update table (status, etc.)

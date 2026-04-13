@@ -52,19 +52,27 @@ app.get("/categories", (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
-  const { name, price, selectedCategory, type } = req.body;
+  console.log("📥 Incoming /menu request:", req.body);
+  
+  const { name, price, category, type } = req.body;
+
+  if (!name || !price) {
+    console.error("❌ Missing required fields: name or price");
+    return res.status(400).json({ success: false, error: "Name and price are required" });
+  }
 
   const newItem = {
     id: Date.now(),
     name,
     price,
-    category: selectedCategory,
-    type
+    category: category || "Uncategorized",
+    type: type || "General"
   };
 
   menu.push(newItem);
+  saveMenu();
 
-  saveMenu(); // 👈 SAVE TO FILE
+  console.log("✅ Menu item saved:", newItem);
 
   res.json({
     success: true,

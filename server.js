@@ -58,7 +58,7 @@ app.post('/orders', (req, res) => {
     return res.status(400).json({ error: "Table number and items are required" });
   }
 
-  const newOrder = {
+  const savedOrder = {
     id: uuidv4(),
     table_number,
     items,
@@ -66,12 +66,20 @@ app.post('/orders', (req, res) => {
     timestamp: new Date().toISOString()
   };
 
-  orders.push(newOrder);
+  orders.push(savedOrder);
 
-  // Emit real-time event
-  io.emit('order_created', newOrder);
+  // Update table status
+  const table = tables.find(t => t.id === parseInt(req.body.table));
+  if (table) {
+    table.status = "OCCUPIED";
+    table.orders.push(savedOrder);
+    io.emit("table_updated", table);
+  }
 
-  res.status(201).json(newOrder);
+  // Emit real-time event for order
+  io.emit('order_created', savedOrder);
+
+  res.status(201).json(savedOrder);
 });
 
 // PATCH /orders/:id - Update order status

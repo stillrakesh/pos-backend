@@ -37,34 +37,19 @@ app.get('/menu', (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
-  try {
-    console.log("🔥 /menu HIT");
-    console.log("BODY:", req.body);
+  const newItem = {
+    id: Date.now(),
+    name: req.body.name,
+    price: req.body.price,
+    category: req.body.category || "Uncategorized"
+  };
 
-    const newItem = {
-      id: Date.now(),
-      name: req.body.name,
-      price: req.body.price
-    };
+  menu.push(newItem);
 
-    menu.push(newItem);
-
-    console.log("Menu added:", newItem);
-
-    res.status(200).json({
-      success: true,
-      item: newItem,
-      message: "Menu item added successfully"
-    });
-
-  } catch (err) {
-    console.error("❌ ERROR:", err);
-
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
-  }
+  res.json({
+    success: true,
+    item: newItem
+  });
 });
 
 // PUT /menu/:id - Update item

@@ -148,9 +148,12 @@ app.get("/test-add-menu", (req, res) => {
   });
 });
 
-// GET /tables - Return all tables
-app.get('/tables', (req, res) => {
-  res.json(tables);
+// GET /table/:id - Return a single table
+app.get('/table/:id', (req, res) => {
+  const { id } = req.params;
+  const table = tables.find(t => String(t.id) === String(id));
+  if (!table) return res.status(404).json({ error: "Table not found" });
+  res.json(table);
 });
 
 app.post("/tables", (req, res) => {
@@ -211,44 +214,59 @@ app.delete('/tables/:id', (req, res) => {
 });
 
 // GET /orders - Return all orders
-app.get('/orders', (req, res) => {
+app.get("/orders", (req, res) => {
   res.json(orders);
 });
 
-// POST /orders - Create new order
-app.post('/orders', (req, res) => {
-  const { table, items } = req.body;
+// GET /table/:id - Return table info and its orders
+app.get("/table/:id", (req, res) => {
+  const tableId = parseInt(req.params.id);
 
-  if (!table || !items) {
-    return res.status(400).json({ error: "Table ID and items are required" });
-  }
+  const table = tables.find(t => t.id === tableId);
+  const tableOrders = orders.filter(o => o.tableId === tableId);
+
+  res.json({
+    table,
+    orders: tableOrders
+  });
+});
+
+// POST /orders - Create new order
+app.post("/orders", (req, res) => {
+  const { tableId, items } = req.body;
 
   const newOrder = {
-    id: uuidv4(),
-    table: parseInt(table),
+    id: Date.now(),
+    tableId: parseInt(tableId),
     items,
-    status: 'NEW',
-    timestamp: new Date().toISOString()
+    status: "running"
   };
 
   orders.push(newOrder);
   saveOrders();
 
-  // Assign to table and change status
-  const targetTable = tables.find(t => t.id === parseInt(table));
-  if (targetTable) {
-    targetTable.status = "OCCUPIED";
-    targetTable.orders.push(newOrder);
+  // 🔥 mark table as occupied
+  const table = tables.find(t => t.id === parseInt(tableId));
+  if (table) {
+    table.status = "occupied";
+    // Also push to table's internal list for compatibility if needed, 
+    // but the new GET /table/:id logic filters from global orders.
+    // I'll keep them synced for redundancy.
+    if (!table.orders) table.orders = [];
+    table.orders.push(newOrder);
     saveTables();
     
     // Emit real-time table update
-    io.emit("table_updated", targetTable);
+    io.emit("table_updated", table);
   }
 
   // Emit real-time order creation
   io.emit('order_created', newOrder);
 
-  res.status(201).json(newOrder);
+  res.json({
+    success: true,
+    order: newOrder
+  });
 });
 
 // PATCH /orders/:id - Update order status

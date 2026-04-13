@@ -52,11 +52,14 @@ app.get("/categories", (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
+  const { name, price, selectedCategory, type } = req.body;
+
   const newItem = {
     id: Date.now(),
-    name: req.body.name,
-    price: req.body.price,
-    category: req.body.category
+    name,
+    price,
+    category: selectedCategory,
+    type
   };
 
   menu.push(newItem);

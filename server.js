@@ -25,6 +25,10 @@ let orders = [];
 
 let menu = [];
 
+if (fs.existsSync(DATA_FILE)) {
+  menu = JSON.parse(fs.readFileSync(DATA_FILE));
+}
+
 let tables = [
   { id: 1, status: "VACANT", orders: [] },
   { id: 2, status: "VACANT", orders: [] },

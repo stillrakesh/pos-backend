@@ -37,39 +37,20 @@ app.get('/menu', (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
-  try {
-    console.log("🔥 /menu HIT");
-    console.log("BODY:", req.body);
+  console.log("🔥 /menu HIT");
+  console.log(req.body);
 
-    if (!req.body) {
-      return res.status(400).json({ error: "No body received" });
-    }
+  const newItem = {
+    id: Date.now(),
+    name: req.body.name,
+    price: req.body.price
+  };
 
-    const { name, price } = req.body;
+  menu.push(newItem);
 
-    if (!name || !price) {
-      return res.status(400).json({ error: "Missing name or price" });
-    }
+  console.log("Menu added:", newItem);
 
-    const newItem = {
-      id: Date.now(),
-      name,
-      price
-    };
-
-    menu.push(newItem);
-
-    console.log("✅ Menu added:", newItem);
-
-    res.json({
-      success: true,
-      item: newItem
-    });
-
-  } catch (err) {
-    console.error("❌ ERROR:", err);
-    res.status(500).json({ error: "Server crashed", details: err.message });
-  }
+  res.json(newItem);
 });
 
 // PUT /menu/:id - Update item

@@ -24,6 +24,7 @@ const DATA_FILE = "./menu.json";
 let orders = [];
 
 let menu = [];
+let categories = [];
 
 if (fs.existsSync(DATA_FILE)) {
   menu = JSON.parse(fs.readFileSync(DATA_FILE));
@@ -47,8 +48,19 @@ app.get('/menu', (req, res) => {
 });
 
 app.get("/categories", (req, res) => {
-  const uniqueCategories = [...new Set(menu.map(i => i.category))];
-  res.json(uniqueCategories);
+  res.json(categories);
+});
+
+app.post("/categories", (req, res) => {
+  const { name } = req.body;
+
+  if (!name) return res.status(400).json({ error: "Category required" });
+
+  if (!categories.includes(name)) {
+    categories.push(name);
+  }
+
+  res.json({ success: true, categories });
 });
 
 app.post("/menu", (req, res) => {

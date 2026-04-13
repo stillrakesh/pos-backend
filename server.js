@@ -37,23 +37,20 @@ app.get('/menu', (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
-  const { name, price, category } = req.body;
-  
+  console.log("BODY RECEIVED:", req.body);
+
   const newItem = {
     id: Date.now(),
-    name,
-    price,
-    category
+    name: req.body.name,
+    price: req.body.price,
+    category: req.body.category || "Uncategorized"
   };
 
   menu.push(newItem);
 
-  console.log("Menu added:", newItem);
+  console.log("MENU STORED:", newItem);
 
-  res.json({
-    success: true,
-    item: newItem
-  });
+  res.json({ success: true, item: newItem });
 });
 
 // PUT /menu/:id - Update item

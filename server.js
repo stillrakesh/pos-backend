@@ -47,27 +47,16 @@ app.get('/menu', (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
-  console.log("🔥 RAW REQUEST BODY:");
-  console.log(req.body);
-
-  const { name, price, category } = req.body;
-
-  console.log("PARSED VALUES:");
-  console.log("name:", name);
-  console.log("price:", price);
-  console.log("category:", category);
-
   const newItem = {
     id: Date.now(),
-    name,
-    price,
-    category: category || "Uncategorized"
+    name: req.body.name,
+    price: req.body.price,
+    category: req.body.category
   };
 
   menu.push(newItem);
 
-  console.log("✅ FINAL STORED ITEM:");
-  console.log(newItem);
+  saveMenu(); // 👈 SAVE TO FILE
 
   res.json({
     success: true,

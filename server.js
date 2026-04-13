@@ -37,6 +37,9 @@ app.get('/menu', (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
+  console.log("🔥 REQUEST HIT /menu");
+  console.log("BODY:", req.body);
+
   const newItem = {
     id: Date.now(),
     name: req.body.name,
@@ -47,10 +50,7 @@ app.post("/menu", (req, res) => {
 
   console.log("Menu added:", newItem);
 
-  res.json({
-    success: true,
-    item: newItem
-  });
+  res.json(newItem);
 });
 
 // PUT /menu/:id - Update item

@@ -19,6 +19,15 @@ const io = new Server(httpServer, {
 app.use(express.json());
 app.use(cors());
 
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`\x1b[34m[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}\x1b[0m`);
+  if (Object.keys(req.body).length > 0) {
+    console.log('Body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 // 1. In-memory data & Persistence
 const DATA_FILE = "./menu.json";
 const TABLES_FILE = "./tables.json";
@@ -31,7 +40,7 @@ const saveOrders = () => fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, nu
 
 // Initial State Loading
 let menu = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE)) : [];
-let categories = [];
+let categories = ["Main Course", "Starters", "Snacks", "Drinks", "Desserts"]; // Added defaults
 let orders = fs.existsSync(ORDERS_FILE) ? JSON.parse(fs.readFileSync(ORDERS_FILE)) : [];
 let tables = fs.existsSync(TABLES_FILE) ? JSON.parse(fs.readFileSync(TABLES_FILE)) : [];
 
@@ -254,11 +263,17 @@ app.post("/table/:id/clear", (req, res) => {
 
 // POST /orders - Create new order
 app.post("/orders", (req, res) => {
-  const { tableId, items } = req.body;
+  // Support both 'tableId' and 'table' for backward compatibility
+  const rawTableId = req.body.tableId || req.body.table;
+  const { items } = req.body;
+
+  if (!rawTableId) {
+    return res.status(400).json({ error: "Table ID is required" });
+  }
 
   const newOrder = {
     id: Date.now(),
-    tableId: parseInt(tableId),
+    tableId: parseInt(rawTableId),
     items,
     status: "running"
   };
@@ -267,12 +282,9 @@ app.post("/orders", (req, res) => {
   saveOrders();
 
   // 🔥 mark table as occupied
-  const table = tables.find(t => t.id === parseInt(tableId));
+  const table = tables.find(t => t.id === parseInt(rawTableId));
   if (table) {
     table.status = "occupied";
-    // Also push to table's internal list for compatibility if needed, 
-    // but the new GET /table/:id logic filters from global orders.
-    // I'll keep them synced for redundancy.
     if (!table.orders) table.orders = [];
     table.orders.push(newOrder);
     saveTables();
@@ -357,4 +369,10 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`\x1b[35mNetwork: http://${localIP}:${PORT}\x1b[0m`);
   console.log(`\n\x1b[33mUse the Network URL to connect your Captain App and Table devices!\x1b[0m\n`);
   console.log(`Press Ctrl+C to stop\n`);
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('\x1b[31m💥 CRITICAL SERVER ERROR:\x1b[0m', err);
+  res.status(500).json({ error: "Internal Server Error", message: err.message });
 });

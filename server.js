@@ -19,28 +19,29 @@ const io = new Server(httpServer, {
 app.use(express.json());
 app.use(cors());
 
-// 1. In-memory data
+// 1. In-memory data & Persistence
 const DATA_FILE = "./menu.json";
-let orders = [];
+const TABLES_FILE = "./tables.json";
+const ORDERS_FILE = "./orders.json";
 
-let menu = [];
+// Shared save helpers
+const saveMenu = () => fs.writeFileSync(DATA_FILE, JSON.stringify(menu, null, 2));
+const saveTables = () => fs.writeFileSync(TABLES_FILE, JSON.stringify(tables, null, 2));
+const saveOrders = () => fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
+
+// Initial State Loading
+let menu = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE)) : [];
 let categories = [];
+let orders = fs.existsSync(ORDERS_FILE) ? JSON.parse(fs.readFileSync(ORDERS_FILE)) : [];
+let tables = fs.existsSync(TABLES_FILE) ? JSON.parse(fs.readFileSync(TABLES_FILE)) : [];
 
-if (fs.existsSync(DATA_FILE)) {
-  menu = JSON.parse(fs.readFileSync(DATA_FILE));
-}
-
-const saveMenu = () => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(menu, null, 2));
-};
-
-let tables = [];
-
+// Default tables if none exist
 if (tables.length === 0) {
   tables = [
-    { id: 1, name: "Table 1", status: "free", orders: [] },
-    { id: 2, name: "Table 2", status: "free", orders: [] }
+    { id: 1, name: "Table 1", status: "free", orders: [], pos: { x: 50, y: 50 }, type: "Main Floor" },
+    { id: 2, name: "Table 2", status: "free", orders: [], pos: { x: 200, y: 50 }, type: "Main Floor" }
   ];
+  saveTables();
 }
 
 // 2. APIs
@@ -78,10 +79,11 @@ app.post("/menu", (req, res) => {
 
   const newItem = {
     id: Date.now(),
-    name,
-    price,
     category: category || "Uncategorized",
-    type: type || "General"
+    type: type || "General",
+    ...req.body,
+    inStock: req.body.inStock !== undefined ? req.body.inStock : true,
+    stockQuantity: req.body.stockQuantity || 0
   };
 
   menu.push(newItem);
@@ -107,9 +109,7 @@ app.put('/menu/:id', (req, res) => {
 
   menu[itemIndex] = {
     ...menu[itemIndex],
-    name: name || menu[itemIndex].name,
-    price: price || menu[itemIndex].price,
-    category: category || menu[itemIndex].category
+    ...req.body
   };
 
   io.emit("menu_updated", menu);
@@ -156,12 +156,13 @@ app.get('/tables', (req, res) => {
 app.post("/tables", (req, res) => {
   const newTable = {
     id: Date.now(),
-    name: req.body.name,
+    ...req.body,
     status: req.body.status || "free",
     orders: []
   };
 
   tables.push(newTable);
+  saveTables();
 
   console.log("TABLE ADDED:", newTable);
 
@@ -181,7 +182,9 @@ app.patch('/tables/:id', (req, res) => {
     return res.status(404).json({ error: "Table not found" });
   }
 
-  if (status) table.status = status;
+  // Update all fields provided in request
+  Object.assign(table, req.body);
+  saveTables();
 
   io.emit("table_updated", table);
   res.json(table);
@@ -193,6 +196,7 @@ app.delete('/tables/:id', (req, res) => {
   const initialLength = tables.length;
   
   tables = tables.filter(t => t.id !== parseInt(id));
+  saveTables();
 
   if (tables.length === initialLength) {
     return res.status(404).json({ error: "Table not found" });
@@ -228,12 +232,14 @@ app.post('/orders', (req, res) => {
   };
 
   orders.push(newOrder);
+  saveOrders();
 
   // Assign to table and change status
   const targetTable = tables.find(t => t.id === parseInt(table));
   if (targetTable) {
     targetTable.status = "OCCUPIED";
     targetTable.orders.push(newOrder);
+    saveTables();
     
     // Emit real-time table update
     io.emit("table_updated", targetTable);
@@ -262,12 +268,14 @@ app.patch('/orders/:id', (req, res) => {
 
   orders[orderIndex].status = status;
   const updatedOrder = orders[orderIndex];
+  saveOrders();
 
   // Also update the order status within the tables array
   tables.forEach(t => {
     const tableOrderIndex = t.orders.findIndex(o => o.id === id);
     if (tableOrderIndex !== -1) {
       t.orders[tableOrderIndex].status = status;
+      saveTables();
       // Emit table_updated whenever an internal order changes status
       io.emit("table_updated", t);
     }

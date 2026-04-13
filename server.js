@@ -218,6 +218,26 @@ app.get("/orders", (req, res) => {
   res.json(orders);
 });
 
+// POST /table/:id/clear - Clear orders and free table
+app.post("/table/:id/clear", (req, res) => {
+  const tableId = parseInt(req.params.id);
+  const table = tables.find(t => t.id === tableId);
+  
+  if (!table) return res.status(404).json({ error: "Table not found" });
+
+  // 1. Remove orders for this table from global list
+  orders = orders.filter(o => o.tableId !== tableId);
+  saveOrders();
+
+  // 2. Reset table status
+  table.status = "free";
+  table.orders = [];
+  saveTables();
+
+  io.emit("table_updated", table);
+  res.json({ success: true, table });
+});
+
 // GET /table/:id - Return table info and its orders
 app.get("/table/:id", (req, res) => {
   const tableId = parseInt(req.params.id);

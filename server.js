@@ -20,6 +20,7 @@ app.use(express.json());
 app.use(cors());
 
 // 1. In-memory data
+const DATA_FILE = "./menu.json";
 let orders = [];
 
 let menu = [];

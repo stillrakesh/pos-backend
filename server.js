@@ -34,11 +34,7 @@ const saveMenu = () => {
   fs.writeFileSync(DATA_FILE, JSON.stringify(menu, null, 2));
 };
 
-let tables = [
-  { id: 1, status: "VACANT", orders: [] },
-  { id: 2, status: "VACANT", orders: [] },
-  { id: 3, status: "VACANT", orders: [] }
-];
+let tables = [];
 
 // 2. APIs
 

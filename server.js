@@ -100,6 +100,60 @@ app.get('/tables', (req, res) => {
   res.json(tables);
 });
 
+// POST /tables - Add new table
+app.post('/tables', (req, res) => {
+  const { id } = req.body;
+  
+  const newTable = {
+    id: id || (tables.length > 0 ? Math.max(...tables.map(t => t.id)) + 1 : 1),
+    status: "VACANT",
+    orders: []
+  };
+
+  if (tables.find(t => t.id === newTable.id)) {
+    return res.status(400).json({ error: "Table ID already exists" });
+  }
+
+  tables.push(newTable);
+  io.emit("table_updated", newTable);
+  res.status(201).json(newTable);
+});
+
+// PATCH /tables/:id - Update table (status, etc.)
+app.patch('/tables/:id', (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const table = tables.find(t => t.id === parseInt(id));
+  if (!table) {
+    return res.status(404).json({ error: "Table not found" });
+  }
+
+  if (status) table.status = status;
+
+  io.emit("table_updated", table);
+  res.json(table);
+});
+
+// DELETE /tables/:id - Remove table
+app.delete('/tables/:id', (req, res) => {
+  const { id } = req.params;
+  const initialLength = tables.length;
+  
+  tables = tables.filter(t => t.id !== parseInt(id));
+
+  if (tables.length === initialLength) {
+    return res.status(404).json({ error: "Table not found" });
+  }
+
+  // When a table is deleted, we notify the clients that a change happened.
+  // We emit null or an empty update for that ID, or just emit the whole list.
+  // For consistency with real-time UI, I'll emit "table_deleted" or just "table_updated" with the list.
+  // I'll emit the new list to ensure UI sync.
+  io.emit("table_updated", { deletedId: parseInt(id), tables }); 
+  res.status(204).send();
+});
+
 // GET /orders - Return all orders
 app.get('/orders', (req, res) => {
   res.json(orders);

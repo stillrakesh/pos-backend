@@ -37,7 +37,7 @@ let menu = [
 
 // GET /tables - Return all tables
 app.get('/tables', (req, res) => {
-  res.json({ tables });
+  res.json(tables);
 });
 
 // GET /menu - Return all menu items

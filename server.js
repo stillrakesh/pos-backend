@@ -46,6 +46,8 @@ app.post("/menu", (req, res) => {
 
   menu.push(newItem);
 
+  console.log("Menu added:", newItem);
+
   res.json({
     success: true,
     item: newItem

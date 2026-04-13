@@ -46,6 +46,11 @@ app.get('/menu', (req, res) => {
   res.json(menu);
 });
 
+app.get("/categories", (req, res) => {
+  const uniqueCategories = [...new Set(menu.map(i => i.category))];
+  res.json(uniqueCategories);
+});
+
 app.post("/menu", (req, res) => {
   const newItem = {
     id: Date.now(),

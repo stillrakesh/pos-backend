@@ -40,7 +40,7 @@ app.get('/tables', (req, res) => {
 
 // GET /menu - Return all menu items
 app.get('/menu', (req, res) => {
-  res.json({ menu });
+  res.json(menu);
 });
 
 // GET /orders - Return all orders

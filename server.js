@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import os from 'os';
 
 const app = express();
 const httpServer = createServer(app);
@@ -19,12 +20,34 @@ app.use(express.json());
 
 // In-memory storage
 let orders = [];
+let tables = [
+  { id: 1, status: "VACANT", orders: [] },
+  { id: 2, status: "VACANT", orders: [] },
+  { id: 3, status: "VACANT", orders: [] }
+];
+
+let menu = [
+  { id: 1, name: 'Hot Coffee', price: 60, cat: 'Beverages', type: 'Veg' },
+  { id: 2, name: 'Cold Coffee', price: 80, cat: 'Beverages', type: 'Veg' },
+  { id: 3, name: 'Club Sandwich', price: 120, cat: 'Snacks', type: 'Veg' },
+  { id: 4, name: 'Chicken Pizza', price: 250, cat: 'Main Course', type: 'Non-Veg' }
+];
 
 // REST API Endpoints
 
+// GET /tables - Return all tables
+app.get('/tables', (req, res) => {
+  res.json({ tables });
+});
+
+// GET /menu - Return all menu items
+app.get('/menu', (req, res) => {
+  res.json({ menu });
+});
+
 // GET /orders - Return all orders
 app.get('/orders', (req, res) => {
-  res.json(orders);
+  res.json({ orders });
 });
 
 // POST /orders - Create new order
@@ -86,11 +109,24 @@ io.on('connection', (socket) => {
 
 // Server setup
 const PORT = 3000;
-const HOST = '0.0.0.0';
 
-httpServer.listen(PORT, HOST, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
+  const networkInterfaces = os.networkInterfaces();
+  let localIP = 'localhost';
+  
+  for (const interfaceName in networkInterfaces) {
+    const interfaces = networkInterfaces[interfaceName];
+    for (const iface of interfaces) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        localIP = iface.address;
+        break;
+      }
+    }
+  }
+
   console.log(`\n\x1b[32m🚀 Restaurant POS Backend Server Running\x1b[0m`);
   console.log(`\x1b[35mLocal:   http://localhost:${PORT}\x1b[0m`);
-  console.log(`\x1b[35mNetwork: http://0.0.0.0:${PORT}\x1b[0m`);
-  console.log(`\nPress Ctrl+C to stop\n`);
+  console.log(`\x1b[35mNetwork: http://${localIP}:${PORT}\x1b[0m`);
+  console.log(`\n\x1b[33mUse the Network URL to connect from your Captain App!\x1b[0m\n`);
+  console.log(`Press Ctrl+C to stop\n`);
 });

@@ -37,11 +37,13 @@ app.get('/menu', (req, res) => {
 });
 
 app.post("/menu", (req, res) => {
+  const { name, price, category } = req.body;
+  
   const newItem = {
     id: Date.now(),
-    name: req.body.name,
-    price: req.body.price,
-    category: req.body.category || "Uncategorized"
+    name,
+    price,
+    category
   };
 
   menu.push(newItem);

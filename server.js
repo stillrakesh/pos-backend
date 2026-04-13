@@ -95,6 +95,23 @@ app.delete('/menu/:id', (req, res) => {
   res.status(204).send();
 });
 
+app.get("/test-add-menu", (req, res) => {
+  const newItem = {
+    id: Date.now(),
+    name: "Test Item",
+    price: 999
+  };
+
+  menu.push(newItem);
+
+  console.log("Added item:", newItem);
+
+  res.json({
+    message: "Item added",
+    menu
+  });
+});
+
 // GET /tables - Return all tables
 app.get('/tables', (req, res) => {
   res.json(tables);

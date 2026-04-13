@@ -22,7 +22,7 @@ app.use(cors());
 // Request Logger
 app.use((req, res, next) => {
   console.log(`\x1b[34m[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}\x1b[0m`);
-  if (Object.keys(req.body).length > 0) {
+  if (req.body && Object.keys(req.body).length > 0) {
     console.log('Body:', JSON.stringify(req.body, null, 2));
   }
   next();
